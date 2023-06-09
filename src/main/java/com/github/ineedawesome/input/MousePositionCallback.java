@@ -8,7 +8,7 @@ public class MousePositionCallback extends GLFWCursorPosCallback {
 	private static int mouseY = 0;
 	private static int mouseDX = 0;
 	private static int mouseDY = 0;
-	private static boolean firstMove = true;
+	public static boolean firstMove = true;
 
 	@Override
 	public void invoke(long window, double xpos, double ypos) {

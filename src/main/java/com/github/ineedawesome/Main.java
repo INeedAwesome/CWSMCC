@@ -5,6 +5,13 @@ import com.github.ineedawesome.gl.VAO;
 import com.github.ineedawesome.gl.VBO;
 import com.github.ineedawesome.graphics.ShaderProgram;
 import com.github.ineedawesome.graphics.Texture;
+import com.github.ineedawesome.input.Input;
+import com.github.ineedawesome.input.MousePositionCallback;
+import imgui.ImGui;
+import imgui.ImGuiIO;
+import imgui.flag.ImGuiConfigFlags;
+import imgui.gl3.ImGuiImplGl3;
+import imgui.glfw.ImGuiImplGlfw;
 import org.joml.*;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
@@ -12,23 +19,21 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 
 import org.lwjgl.opengl.*;
-import org.lwjgl.system.MemoryStack;
 
-import java.nio.FloatBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 public class Main implements Runnable {
 
-	GameWindow gameWindow;
+	ImGuiImplGlfw imGuiGlfw = new ImGuiImplGlfw();
+	ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
 	Camera camera;
 
 	VAO vao;
 	IBO ibo;
 	ShaderProgram shaderProgram;
 	Texture texture;
-
 	List<Vector3f> vertices = Arrays.asList(
 			// front face
 			new Vector3f(-0.5f, 0.5f, 0.5f), // topleft vert
@@ -143,7 +148,16 @@ public class Main implements Runnable {
 
 		GameWindow.createWindow(1280, 720, "Game Title!");
 
-		this.camera = new Camera(new Vector3f(1, -1, 3));
+		ImGui.createContext();
+		ImGuiIO io = ImGui.getIO();
+		io.addConfigFlags(ImGuiConfigFlags.ViewportsEnable);
+		io.addConfigFlags(ImGuiConfigFlags.DockingEnable);
+
+
+		imGuiGlfw.init(GameWindow.getPointer(), true);
+		imGuiGl3.init("#version 330 core");
+
+		this.camera = new Camera(new Vector3f(1, 20, 3));
 
 		vao = new VAO();
 		VBO verticesVbo = new VBO().VBOVector3(vertices);
@@ -156,60 +170,91 @@ public class Main implements Runnable {
 
 		texture = new Texture("resources/textures/dirt.png");
 
-		GLFW.glfwSetInputMode(GameWindow.getPointer(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+		//GLFW.glfwSetInputMode(GameWindow.getPointer(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 	}
 
 	private void loop() {
+
 		while (!GLFW.glfwWindowShouldClose(GameWindow.getPointer())) {
 			GL11.glClearColor(0.8f, 0.0f, 0.1f, 1f);
 			GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT); // clear the framebuffer
+			update(0.0061f);
+			render();
 
-			camera.Update();
+			imGuiGlfw.newFrame();
+			ImGui.newFrame();
 
-			//prepare draw here
-			vao.bind();
-			ibo.bind();
-			texture.bind();
-			shaderProgram.bind();
-			vao.enable(0);
-			vao.enable(1);
+			imGuiRender();
 
-			// create the mvp every frame
-			Matrix4f model = new Matrix4f();
-
-			int modelLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "model");
-			int viewLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "view");
-			int projectionLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "projection");
-
-			loadMatrix(modelLocation, model);
-			loadMatrix(viewLocation, camera.getViewMatrix());
-			loadMatrix(projectionLocation, camera.getProjectionMatrix());
-
-			// draw
-			GL11.glDrawElements(GL11.GL_TRIANGLES, indices.size()*3, GL11.GL_UNSIGNED_INT, 0);
-
-			// end draw
-			vao.disable(1);
-			vao.disable(0);
-			shaderProgram.unbind();
-			texture.unbind();
-			ibo.unbind();
-			vao.unbind();
-
-			// Refresh screen
+			ImGui.render();
+			imGuiGl3.renderDrawData(ImGui.getDrawData());
+			if (ImGui.getIO().hasConfigFlags(ImGuiConfigFlags.ViewportsEnable)) {
+				final long backupWindowPtr = GLFW.glfwGetCurrentContext();
+				ImGui.updatePlatformWindows();
+				ImGui.renderPlatformWindowsDefault();
+				GLFW.glfwMakeContextCurrent(backupWindowPtr);
+			}
 			GLFW.glfwSwapBuffers(GameWindow.getPointer());
 			GLFW.glfwPollEvents();
 		}
 	}
 
+	public static boolean renderWireframe = false;
 
-	public void loadMatrix(int location, Matrix4f matrix4f) {
-		try (MemoryStack stack = MemoryStack.stackPush()) {
-			FloatBuffer fb = stack.mallocFloat(16);
-			matrix4f.get(fb);
-			GL20.glUniformMatrix4fv(location, false, fb);
+	public void imGuiRender() {
+		ImGui.begin("Properties");
+		if(ImGui.checkbox("Render Wireframe", renderWireframe)) {
+			renderWireframe = !renderWireframe;
+			if (renderWireframe) {
+				GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
+			}
+			else {
+				GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
+			}
 		}
+		ImGui.end();
+	}
+
+	public void update(float deltaTime) {
+		camera.Update(deltaTime);
+		if (Input.isKeyPressed(GLFW.GLFW_KEY_LEFT_CONTROL))
+			GLFW.glfwSetInputMode(GameWindow.getPointer(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+		if (Input.isKeyPressed(GLFW.GLFW_KEY_LEFT_SHIFT)) {
+			GLFW.glfwSetInputMode(GameWindow.getPointer(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+			MousePositionCallback.firstMove = true;
+		}
+	}
+	public void render() {
+		//prepare draw here
+		vao.bind();
+		ibo.bind();
+		texture.bind();
+		shaderProgram.bind();
+		vao.enable(0);
+		vao.enable(1);
+
+		// create the mvp every frame
+		Matrix4f model = new Matrix4f();
+
+		int modelLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "model");
+		int viewLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "view");
+		int projectionLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "projection");
+
+		shaderProgram.loadMatrix(modelLocation, model);
+		shaderProgram.loadMatrix(viewLocation, camera.getViewMatrix());
+		shaderProgram.loadMatrix(projectionLocation, camera.getProjectionMatrix());
+
+		// draw
+		GL11.glDrawElements(GL11.GL_TRIANGLES, indices.size()*3, GL11.GL_UNSIGNED_INT, 0);
+
+		// end draw
+		vao.disable(1);
+		vao.disable(0);
+		shaderProgram.unbind();
+		texture.unbind();
+		ibo.unbind();
+		vao.unbind();
 	}
 
 	public static float[] Vector3fListToFloatArray(List<Vector3f> data)

@@ -11,30 +11,42 @@ public class Camera {
 
 	public Vector3f position;
 	public Vector3f rotation;
+
+	public Vector3f velocity;
 	public float fovInDegrees = 90;
 	public float sensitivity = 0.1f; // min 0, max 1
-
-	private final float speed = 0.01f;
 
 	public Camera(Vector3f position) {
 		this.position = position;
 		this.rotation = new Vector3f(0, 0, -90);
+		this.velocity = new Vector3f(0, 0, 0);
 	}
 
-	public void Update() {
+	public void Update(float dt) {
+		InputController(dt);
 
-		InputController();
+		// basic gravity
+		float gravity = 9.82f;
+		this.position.y = this.position.y - (this.velocity.y * dt);
+		this.velocity.y = this.velocity.y - (-gravity * dt);
+		if (this.position.y <= 0) {
+			this.position.y = 0;
+			this.velocity.y = 0;
+		}
 	}
 
-	public void InputController() {
-		this.rotation.x += MousePositionCallback.getMouseDX() * sensitivity;
-		this.rotation.y += MousePositionCallback.getMouseDY() * sensitivity;
+	public void InputController(float dt) {
+		if (GLFW.glfwGetInputMode(GameWindow.getPointer(),GLFW.GLFW_CURSOR) == GLFW.GLFW_CURSOR_DISABLED) {
+			this.rotation.x += MousePositionCallback.getMouseDX() * sensitivity;
+			this.rotation.y += MousePositionCallback.getMouseDY() * sensitivity;
+		}
 		this.rotation.y = Math.clamp(-89, 89, this.rotation.y);
 		if (this.rotation.x >= 360)
 			this.rotation.x = 0;
 		if (this.rotation.x < 0)
 			this.rotation.x = 360;
 
+		float speed = 0.01f;
 		if (Input.isKeyDown(GLFW.GLFW_KEY_W)) {
 			this.position.x += Math.sin(Math.toRadians(this.rotation.x)) * speed;
 			this.position.z -= Math.cos(Math.toRadians(this.rotation.x)) * speed;
@@ -47,18 +59,22 @@ public class Camera {
 			this.position.x -= Math.cos(Math.toRadians(this.rotation.x)) * speed;
 			this.position.z -= Math.sin(Math.toRadians(this.rotation.x)) * speed;
 		}
+		if (Input.isKeyDown(GLFW.GLFW_KEY_D)) {
+			this.position.x += Math.cos(Math.toRadians(this.rotation.x)) * speed;
+			this.position.z += Math.sin(Math.toRadians(this.rotation.x)) * speed;
+		}
 		if (Input.isKeyDown(GLFW.GLFW_KEY_E)) {
 			this.position.y += speed;
 		}
 		if (Input.isKeyDown(GLFW.GLFW_KEY_Q)) {
 			this.position.y -= speed;
 		}
-		if (Input.isKeyDown(GLFW.GLFW_KEY_D)) {
-			this.position.x += Math.cos(Math.toRadians(this.rotation.x)) * speed;
-			this.position.z += Math.sin(Math.toRadians(this.rotation.x)) * speed;
-		}
+
 		if (Input.isKeyDown(GLFW.GLFW_KEY_ESCAPE)) {
 			GLFW.glfwSetWindowShouldClose(GameWindow.getPointer(), true);
+		}
+		if (Input.isKeyPressed(GLFW.GLFW_KEY_SPACE)) {
+			this.velocity.y -= 800.0f * dt;
 		}
 		//this.position.normalize(); // goes faster with W & D instead of going same speed as only W
 	}

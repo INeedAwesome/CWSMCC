@@ -1,11 +1,14 @@
 package com.github.ineedawesome.graphics;
 
+import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.system.MemoryStack;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.FloatBuffer;
 
 public class ShaderProgram {
 
@@ -32,6 +35,14 @@ public class ShaderProgram {
 
 	public void delete() {
 		GL20.glDeleteShader(shaderId);
+	}
+
+	public void loadMatrix(int location, Matrix4f matrix4f) {
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			FloatBuffer fb = stack.mallocFloat(16);
+			matrix4f.get(fb);
+			GL20.glUniformMatrix4fv(location, false, fb);
+		}
 	}
 
 	public void compileShader(String shaderSource, int shaderType) {
