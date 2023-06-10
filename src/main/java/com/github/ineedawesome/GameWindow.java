@@ -74,7 +74,7 @@ public class GameWindow {
 		GLFW.glfwSwapInterval(1);
 		GL.createCapabilities();
 		// Make the window visible
-		GLFW.glfwShowWindow(pointer);
+
 	}
 
 	public static int getWidth() {

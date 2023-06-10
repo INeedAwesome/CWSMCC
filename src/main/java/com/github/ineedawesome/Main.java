@@ -152,12 +152,8 @@ public class Main implements Runnable {
 		ImGuiIO io = ImGui.getIO();
 		io.addConfigFlags(ImGuiConfigFlags.ViewportsEnable);
 		io.addConfigFlags(ImGuiConfigFlags.DockingEnable);
-
-
 		imGuiGlfw.init(GameWindow.getPointer(), true);
 		imGuiGl3.init("#version 330 core");
-
-		this.camera = new Camera(new Vector3f(1, 20, 3));
 
 		vao = new VAO();
 		VBO verticesVbo = new VBO().VBOVector3(vertices);
@@ -166,12 +162,13 @@ public class Main implements Runnable {
 		vao.linkToVAO(1, 2, uvsVbo);
 		ibo = new IBO(indices);
 
+		this.camera = new Camera(new Vector3f(1, 20, 3));
 		shaderProgram = new ShaderProgram("resources/shaders/vertex.glsl", "resources/shaders/fragment.glsl");
-
 		texture = new Texture("resources/textures/dirt.png");
 
-		//GLFW.glfwSetInputMode(GameWindow.getPointer(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+		GLFW.glfwSetInputMode(GameWindow.getPointer(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GLFW.glfwShowWindow(GameWindow.getPointer());
 	}
 
 	private void loop() {
@@ -204,15 +201,12 @@ public class Main implements Runnable {
 
 	public void imGuiRender() {
 		ImGui.begin("Properties");
-		if(ImGui.checkbox("Render Wireframe", renderWireframe)) {
+
+		if (ImGui.checkbox("Render Wireframe", renderWireframe)) {
 			renderWireframe = !renderWireframe;
-			if (renderWireframe) {
-				GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
-			}
-			else {
-				GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
-			}
+			useWireframe();
 		}
+
 		ImGui.end();
 	}
 
@@ -234,14 +228,11 @@ public class Main implements Runnable {
 		vao.enable(0);
 		vao.enable(1);
 
-		// create the mvp every frame
-		Matrix4f model = new Matrix4f();
-
 		int modelLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "model");
 		int viewLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "view");
 		int projectionLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "projection");
 
-		shaderProgram.loadMatrix(modelLocation, model);
+		shaderProgram.loadMatrix(modelLocation, new Matrix4f());
 		shaderProgram.loadMatrix(viewLocation, camera.getViewMatrix());
 		shaderProgram.loadMatrix(projectionLocation, camera.getProjectionMatrix());
 
@@ -255,6 +246,14 @@ public class Main implements Runnable {
 		texture.unbind();
 		ibo.unbind();
 		vao.unbind();
+	}
+
+	public void useWireframe() {
+		if (renderWireframe) {
+			GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
+		} else {
+			GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
+		}
 	}
 
 	public static float[] Vector3fListToFloatArray(List<Vector3f> data)

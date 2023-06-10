@@ -25,14 +25,6 @@ public class Camera {
 	public void Update(float dt) {
 		InputController(dt);
 
-		// basic gravity
-		float gravity = 9.82f;
-		this.position.y = this.position.y - (this.velocity.y * dt);
-		this.velocity.y = this.velocity.y - (-gravity * dt);
-		if (this.position.y <= 0) {
-			this.position.y = 0;
-			this.velocity.y = 0;
-		}
 	}
 
 	public void InputController(float dt) {
