@@ -1,5 +1,6 @@
 package com.github.ineedawesome.gl;
 
+import com.github.ineedawesome.ArrayHelper;
 import com.github.ineedawesome.Main;
 import org.joml.Vector3i;
 import org.lwjgl.opengl.GL15;
@@ -12,7 +13,7 @@ public class IBO {
 	public IBO(List<Vector3i> data) {
 		id = GL15.glGenBuffers();
 		bind();
-		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, Main.Vector3iListToIntArray(data), GL15.GL_STATIC_DRAW);
+		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, ArrayHelper.Vector3iListToIntArray(data), GL15.GL_STATIC_DRAW);
 	}
 
 	public void bind() {
