@@ -59,6 +59,7 @@ public class GameWindow {
 
 			// Get the resolution of the primary monitor
 			GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+			assert vidmode != null;
 
 			// Center the window
 			GLFW.glfwSetWindowPos(
@@ -73,8 +74,10 @@ public class GameWindow {
 		// Enable v-sync
 		GLFW.glfwSwapInterval(1);
 		GL.createCapabilities();
-		// Make the window visible
+	}
 
+	public static void showWindow() {
+		GLFW.glfwShowWindow(pointer);
 	}
 
 	public static int getWidth() {

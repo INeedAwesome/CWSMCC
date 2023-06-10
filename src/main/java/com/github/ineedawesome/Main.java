@@ -162,19 +162,19 @@ public class Main implements Runnable {
 		vao.linkToVAO(1, 2, uvsVbo);
 		ibo = new IBO(indices);
 
-		this.camera = new Camera(new Vector3f(1, 20, 3));
+		this.camera = new Camera(new Vector3f(1, 1, 1));
 		shaderProgram = new ShaderProgram("resources/shaders/vertex.glsl", "resources/shaders/fragment.glsl");
 		texture = new Texture("resources/textures/dirt.png");
 
 		GLFW.glfwSetInputMode(GameWindow.getPointer(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
-		GLFW.glfwShowWindow(GameWindow.getPointer());
+		GameWindow.showWindow();
 	}
 
 	private void loop() {
 
 		while (!GLFW.glfwWindowShouldClose(GameWindow.getPointer())) {
-			GL11.glClearColor(0.8f, 0.0f, 0.1f, 1f);
+			GL11.glClearColor(1.0f, 0.0f, 1.0f, 1f);
 			GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 			update(0.0061f);
 			render();
