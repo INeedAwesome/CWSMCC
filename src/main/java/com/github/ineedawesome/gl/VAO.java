@@ -16,7 +16,6 @@ public class VAO {
 		bind();
 		vbo.bind();
 		GL30.glVertexAttribPointer(location, size, GL11.GL_FLOAT, false, 0, 0);
-		enable(location);
 		unbind();
 	}
 

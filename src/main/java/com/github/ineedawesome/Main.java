@@ -7,6 +7,7 @@ import com.github.ineedawesome.graphics.ShaderProgram;
 import com.github.ineedawesome.graphics.Texture;
 import com.github.ineedawesome.input.Input;
 import com.github.ineedawesome.input.MousePositionCallback;
+import com.github.ineedawesome.world.Chunk;
 import imgui.ImGui;
 import imgui.ImGuiIO;
 import imgui.flag.ImGuiConfigFlags;
@@ -20,8 +21,6 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 
 import org.lwjgl.opengl.*;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 public class Main implements Runnable {
@@ -29,94 +28,8 @@ public class Main implements Runnable {
 	ImGuiImplGlfw imGuiGlfw = new ImGuiImplGlfw();
 	ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
 	Camera camera;
-
-	VAO vao;
-	IBO ibo;
 	ShaderProgram shaderProgram;
-	Texture texture;
-	List<Vector3f> vertices = Arrays.asList(
-			// front face
-			new Vector3f(-0.5f, 0.5f, 0.5f), // topleft vert
-			new Vector3f(0.5f, 0.5f, 0.5f), // topright vert
-			new Vector3f(0.5f, -0.5f, 0.5f), // bottomright vert
-			new Vector3f(-0.5f, -0.5f, 0.5f), // bottomleft vert
-			// right face
-			new Vector3f(0.5f, 0.5f, 0.5f), // topleft vert
-			new Vector3f(0.5f, 0.5f, -0.5f), // topright vert
-			new Vector3f(0.5f, -0.5f, -0.5f), // bottomright vert
-			new Vector3f(0.5f, -0.5f, 0.5f), // bottomleft vert
-			// back face
-			new Vector3f(0.5f, 0.5f, -0.5f), // topleft vert
-			new Vector3f(-0.5f, 0.5f, -0.5f), // topright vert
-			new Vector3f(-0.5f, -0.5f, -0.5f), // bottomright vert
-			new Vector3f(0.5f, -0.5f, -0.5f), // bottomleft vert
-			// left face
-			new Vector3f(-0.5f, 0.5f, -0.5f), // topleft vert
-			new Vector3f(-0.5f, 0.5f, 0.5f), // topright vert
-			new Vector3f(-0.5f, -0.5f, 0.5f), // bottomright vert
-			new Vector3f(-0.5f, -0.5f, -0.5f), // bottomleft vert
-			// top face
-			new Vector3f(-0.5f, 0.5f, -0.5f), // topleft vert
-			new Vector3f(0.5f, 0.5f, -0.5f), // topright vert
-			new Vector3f(0.5f, 0.5f, 0.5f), // bottomright vert
-			new Vector3f(-0.5f, 0.5f, 0.5f), // bottomleft vert
-			// bottom face
-			new Vector3f(-0.5f, -0.5f, 0.5f), // topleft vert
-			new Vector3f(0.5f, -0.5f, 0.5f), // topright vert
-			new Vector3f(0.5f, -0.5f, -0.5f), // bottomright vert
-			new Vector3f(-0.5f, -0.5f, -0.5f) // bottomleft vert
-	);
-
-	List<Vector3i> indices = Arrays.asList(
-			new Vector3i(0, 1, 2), // first face
-			new Vector3i(2, 3, 0),
-
-			new Vector3i(4, 5, 6), // second, etc...
-			new Vector3i(6, 7, 4),
-
-			new Vector3i(8, 9, 10),
-			new Vector3i(10, 11, 8),
-
-			new Vector3i(12, 13, 14),
-			new Vector3i(14, 15, 12),
-
-			new Vector3i(16, 17, 18),
-			new Vector3i(18, 19, 16),
-
-			new Vector3i(20, 21, 22),
-			new Vector3i(22, 23, 20)
-	);
-	List<Vector2f> textureCoords = Arrays.asList(
-			new Vector2f(0f, 1f),
-			new Vector2f(1f, 1f),
-			new Vector2f(1f, 0f),
-			new Vector2f(0f, 0f),
-
-			new Vector2f(0f, 1f),
-			new Vector2f(1f, 1f),
-			new Vector2f(1f, 0f),
-			new Vector2f(0f, 0f),
-
-			new Vector2f(0f, 1f),
-			new Vector2f(1f, 1f),
-			new Vector2f(1f, 0f),
-			new Vector2f(0f, 0f),
-
-			new Vector2f(0f, 1f),
-			new Vector2f(1f, 1f),
-			new Vector2f(1f, 0f),
-			new Vector2f(0f, 0f),
-
-			new Vector2f(0f, 1f),
-			new Vector2f(1f, 1f),
-			new Vector2f(1f, 0f),
-			new Vector2f(0f, 0f),
-
-			new Vector2f(0f, 1f),
-			new Vector2f(1f, 1f),
-			new Vector2f(1f, 0f),
-			new Vector2f(0f, 0f)
-	);
+	Chunk chunk;
 
 	public static void main(String[] args) {
 		new Main().run();
@@ -125,17 +38,16 @@ public class Main implements Runnable {
 	@Override
 	public void run() {
 		System.out.println("Hello LWJGL " + Version.getVersion() + "!");
-
 		init();
 		loop();
+		delete();
+	}
+
+	private void delete() {
+		chunk.delete();
 
 		Callbacks.glfwFreeCallbacks(GameWindow.getPointer());
 		GLFW.glfwDestroyWindow(GameWindow.getPointer());
-
-		ibo.delete();
-		shaderProgram.delete();
-		texture.delete();
-		vao.delete();
 
 		GLFW.glfwTerminate();
 		Objects.requireNonNull(GLFW.glfwSetErrorCallback(null)).free();
@@ -155,16 +67,10 @@ public class Main implements Runnable {
 		imGuiGlfw.init(GameWindow.getPointer(), true);
 		imGuiGl3.init("#version 330 core");
 
-		vao = new VAO();
-		VBO verticesVbo = new VBO().VBOVector3(vertices);
-		VBO uvsVbo = new VBO().VBOVector2(textureCoords);
-		vao.linkToVAO(0, 3, verticesVbo);
-		vao.linkToVAO(1, 2, uvsVbo);
-		ibo = new IBO(indices);
-
-		this.camera = new Camera(new Vector3f(1, 1, 1));
+		chunk = new Chunk(new Vector3f(0, 0, 0));
 		shaderProgram = new ShaderProgram("resources/shaders/vertex.glsl", "resources/shaders/fragment.glsl");
-		texture = new Texture("resources/textures/dirt.png");
+
+		this.camera = new Camera(new Vector3f(0, 1, 0));
 
 		GLFW.glfwSetInputMode(GameWindow.getPointer(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
@@ -181,9 +87,7 @@ public class Main implements Runnable {
 
 			imGuiGlfw.newFrame();
 			ImGui.newFrame();
-
 			imGuiRender();
-
 			ImGui.render();
 			imGuiGl3.renderDrawData(ImGui.getDrawData());
 			if (ImGui.getIO().hasConfigFlags(ImGuiConfigFlags.ViewportsEnable)) {
@@ -202,6 +106,16 @@ public class Main implements Runnable {
 	public void imGuiRender() {
 		ImGui.begin("Properties");
 
+		ImGui.text("Camera: ");
+		ImGui.text(" - Position X: " + camera.position.x);
+		ImGui.text(" - Position Y: " + camera.position.y);
+		ImGui.text(" - Position Z: " + camera.position.z);
+		ImGui.spacing();
+		ImGui.text(" - Yaw: " + camera.rotation.x);
+		ImGui.text(" - Pitch: " + camera.rotation.y);
+
+		ImGui.spacing();
+		ImGui.spacing();
 		if (ImGui.checkbox("Render Wireframe", renderWireframe)) {
 			renderWireframe = !renderWireframe;
 			useWireframe();
@@ -221,12 +135,6 @@ public class Main implements Runnable {
 	}
 	public void render() {
 		//prepare draw here
-		vao.bind();
-		ibo.bind();
-		texture.bind();
-		shaderProgram.bind();
-		vao.enable(0);
-		vao.enable(1);
 
 		int modelLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "model");
 		int viewLocation = GL20.glGetUniformLocation(shaderProgram.shaderId, "view");
@@ -237,15 +145,10 @@ public class Main implements Runnable {
 		shaderProgram.loadMatrix(projectionLocation, camera.getProjectionMatrix());
 
 		// draw
-		GL11.glDrawElements(GL11.GL_TRIANGLES, indices.size()*3, GL11.GL_UNSIGNED_INT, 0);
+		chunk.render(shaderProgram);
 
 		// end draw
-		vao.disable(1);
-		vao.disable(0);
-		shaderProgram.unbind();
-		texture.unbind();
-		ibo.unbind();
-		vao.unbind();
+
 	}
 
 	public void useWireframe() {
