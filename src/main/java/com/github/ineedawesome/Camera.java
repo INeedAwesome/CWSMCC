@@ -38,7 +38,7 @@ public class Camera {
 		if (this.rotation.x < 0)
 			this.rotation.x = 360;
 
-		float speed = 0.01f;
+		float speed = 0.1f;
 		if (Input.isKeyDown(GLFW.GLFW_KEY_W)) {
 			this.position.x += Math.sin(Math.toRadians(this.rotation.x)) * speed;
 			this.position.z -= Math.cos(Math.toRadians(this.rotation.x)) * speed;

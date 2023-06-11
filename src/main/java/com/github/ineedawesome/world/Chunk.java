@@ -22,7 +22,7 @@ public class Chunk {
 	private List<Vector2f> chunkUvs;
 	private List<Vector3i> chunkIndices;
 
-//	public static int SIZE = 16;
+	public static int SIZE = 16;
 //	public static int HEIGHT = 32;
 
 	@Unsigned
@@ -49,33 +49,37 @@ public class Chunk {
 //	}
 
 	public void genBlocks() {
-		for (int i = 0; i < 3; i++) {
-			Block block = new Block(new Vector3f(i, i, i));
-			FaceData frontFaceData = block.getFace(BlockData.Faces.FRONT);
-			chunkVertices.addAll(frontFaceData.vertices);
-			chunkUvs.addAll(frontFaceData.uvs);
+		for (int x = 0; x < SIZE; x++) {
+			for (int y = 0; y < SIZE; y++) {
+				for (int z = 0; z < SIZE; z++) {
+					Block block = new Block(new Vector3f(x, y, z));
+					FaceData frontFaceData = block.getFace(BlockData.Faces.FRONT);
+					chunkVertices.addAll(frontFaceData.vertices);
+					chunkUvs.addAll(frontFaceData.uvs);
 
-			FaceData backFaceData = block.getFace(BlockData.Faces.BACK);
-			chunkVertices.addAll(backFaceData.vertices);
-			chunkUvs.addAll(backFaceData.uvs);
+					FaceData backFaceData = block.getFace(BlockData.Faces.BACK);
+					chunkVertices.addAll(backFaceData.vertices);
+					chunkUvs.addAll(backFaceData.uvs);
 
-			FaceData leftFaceData = block.getFace(BlockData.Faces.LEFT);
-			chunkVertices.addAll(leftFaceData.vertices);
-			chunkUvs.addAll(leftFaceData.uvs);
+					FaceData leftFaceData = block.getFace(BlockData.Faces.LEFT);
+					chunkVertices.addAll(leftFaceData.vertices);
+					chunkUvs.addAll(leftFaceData.uvs);
 
-			FaceData rightFaceData = block.getFace(BlockData.Faces.RIGHT);
-			chunkVertices.addAll(rightFaceData.vertices);
-			chunkUvs.addAll(rightFaceData.uvs);
+					FaceData rightFaceData = block.getFace(BlockData.Faces.RIGHT);
+					chunkVertices.addAll(rightFaceData.vertices);
+					chunkUvs.addAll(rightFaceData.uvs);
 
-			FaceData topFaceData = block.getFace(BlockData.Faces.TOP);
-			chunkVertices.addAll(topFaceData.vertices);
-			chunkUvs.addAll(topFaceData.uvs);
+					FaceData topFaceData = block.getFace(BlockData.Faces.TOP);
+					chunkVertices.addAll(topFaceData.vertices);
+					chunkUvs.addAll(topFaceData.uvs);
 
-			FaceData bottomFaceData = block.getFace(BlockData.Faces.BOTTOM);
-			chunkVertices.addAll(bottomFaceData.vertices);
-			chunkUvs.addAll(bottomFaceData.uvs);
+					FaceData bottomFaceData = block.getFace(BlockData.Faces.BOTTOM);
+					chunkVertices.addAll(bottomFaceData.vertices);
+					chunkUvs.addAll(bottomFaceData.uvs);
 
-			addIndices(6);
+					addIndices(6);
+				}
+			}
 		}
 	}
 
