@@ -22,8 +22,8 @@ public class Chunk {
 	private List<Vector2f> chunkUvs;
 	private List<Vector3i> chunkIndices;
 
-	public static int SIZE = 16;
-	public static int HEIGHT = 32;
+//	public static int SIZE = 16;
+//	public static int HEIGHT = 32;
 
 	@Unsigned
 	private int indexCount;
@@ -44,24 +44,45 @@ public class Chunk {
 		buildChunk();
 	}
 
-	public void genChunk() {
-
-	}
+//	public void genChunk() {
+//
+//	}
 
 	public void genBlocks() {
 		for (int i = 0; i < 3; i++) {
-			Block block = new Block(new Vector3f(i, 0, 0));
+			Block block = new Block(new Vector3f(i, i, i));
 			FaceData frontFaceData = block.getFace(BlockData.Faces.FRONT);
 			chunkVertices.addAll(frontFaceData.vertices);
 			chunkUvs.addAll(frontFaceData.uvs);
-			addIndices(1);
+
+			FaceData backFaceData = block.getFace(BlockData.Faces.BACK);
+			chunkVertices.addAll(backFaceData.vertices);
+			chunkUvs.addAll(backFaceData.uvs);
+
+			FaceData leftFaceData = block.getFace(BlockData.Faces.LEFT);
+			chunkVertices.addAll(leftFaceData.vertices);
+			chunkUvs.addAll(leftFaceData.uvs);
+
+			FaceData rightFaceData = block.getFace(BlockData.Faces.RIGHT);
+			chunkVertices.addAll(rightFaceData.vertices);
+			chunkUvs.addAll(rightFaceData.uvs);
+
+			FaceData topFaceData = block.getFace(BlockData.Faces.TOP);
+			chunkVertices.addAll(topFaceData.vertices);
+			chunkUvs.addAll(topFaceData.uvs);
+
+			FaceData bottomFaceData = block.getFace(BlockData.Faces.BOTTOM);
+			chunkVertices.addAll(bottomFaceData.vertices);
+			chunkUvs.addAll(bottomFaceData.uvs);
+
+			addIndices(6);
 		}
 	}
 
 	public void addIndices(int amountOfFaces) {
 		for (int i = 0; i<amountOfFaces; i++) {
-			chunkIndices.add(new Vector3i(0+indexCount, 1+indexCount, 2+indexCount)); // pattern for indices is:	0, 1, 2
-			chunkIndices.add(new Vector3i(2+indexCount, 3+indexCount, 0+indexCount)); //							2, 3, 0
+			chunkIndices.add(new Vector3i(indexCount, 1+indexCount, 2+indexCount)); // pattern for indices is:	0, 1, 2
+			chunkIndices.add(new Vector3i(2+indexCount, 3+indexCount, indexCount)); //							2, 3, 0
 
 			indexCount += 4;
 		}
