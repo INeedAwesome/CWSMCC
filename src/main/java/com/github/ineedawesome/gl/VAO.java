@@ -1,6 +1,7 @@
 package com.github.ineedawesome.gl;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
 public class VAO {
@@ -17,6 +18,7 @@ public class VAO {
 		vbo.bind();
 		GL30.glVertexAttribPointer(location, size, GL11.GL_FLOAT, false, 0, 0);
 		unbind();
+		System.out.println( GL20.glGetInteger(GL20.GL_MAX_VERTEX_ATTRIBS));
 	}
 
 	public void enable(int location) {

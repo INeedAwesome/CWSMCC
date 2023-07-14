@@ -12,6 +12,8 @@ public class Block {
 
 	public Vector3f position;
 
+	public BlockData.BlockType blockType;
+
 	private Map<BlockData.Faces, FaceData> faces;
 
 	public List<Vector2f> dirtUv = new ArrayList<>() {{
@@ -21,8 +23,9 @@ public class Block {
 		add(new Vector2f(0f, 0f));
 	}};
 
-	public Block(Vector3f position) {
+	public Block(Vector3f position, BlockData.BlockType blockType) {
 		this.position = position;
+		this.blockType = blockType;
 
 		FaceData faceDataFront = new FaceData();
 		faceDataFront.vertices = addTransformedVertices(BlockData.rawVertexData.get(BlockData.Faces.FRONT));

@@ -5,10 +5,9 @@ import com.github.ineedawesome.gl.VAO;
 import com.github.ineedawesome.gl.VBO;
 import com.github.ineedawesome.graphics.ShaderProgram;
 import com.github.ineedawesome.graphics.Texture;
+import com.github.ineedawesome.noise.Noise;
 import jdk.jfr.Unsigned;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector3i;
+import org.joml.*;
 import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
@@ -21,6 +20,8 @@ public class Chunk {
 	private List<Vector3f> chunkVertices;
 	private List<Vector2f> chunkUvs;
 	private List<Vector3i> chunkIndices;
+
+	Block[][][] chunkBlocks;
 
 	public static int SIZE = 16;
 //	public static int HEIGHT = 32;
@@ -40,47 +41,125 @@ public class Chunk {
 		this.chunkUvs = new ArrayList<>();
 		this.chunkIndices = new ArrayList<>();
 
-		genBlocks();
+		chunkBlocks = new Block[SIZE][SIZE][SIZE];
+
+		float[][] heightMap = genChunk();
+		genBlocks(heightMap);
+		genFaces(heightMap);
 		buildChunk();
 	}
 
-//	public void genChunk() {
-//
-//	}
-
-	public void genBlocks() {
+	public float[][] genChunk() {
+		float[][] heightMap = new float[SIZE][SIZE];
+		Noise.setSeed(123456);
 		for (int x = 0; x < SIZE; x++) {
-			for (int y = 0; y < SIZE; y++) {
-				for (int z = 0; z < SIZE; z++) {
-					Block block = new Block(new Vector3f(x, y, z));
-					FaceData frontFaceData = block.getFace(BlockData.Faces.FRONT);
-					chunkVertices.addAll(frontFaceData.vertices);
-					chunkUvs.addAll(frontFaceData.uvs);
+			for (int z = 0; z < SIZE; z++) {
+				heightMap[x][z] = Noise.CalcPixel2D(x, z, 0.01f);
+			}
+		}
+		return heightMap;
+	}
 
-					FaceData backFaceData = block.getFace(BlockData.Faces.BACK);
-					chunkVertices.addAll(backFaceData.vertices);
-					chunkUvs.addAll(backFaceData.uvs);
-
-					FaceData leftFaceData = block.getFace(BlockData.Faces.LEFT);
-					chunkVertices.addAll(leftFaceData.vertices);
-					chunkUvs.addAll(leftFaceData.uvs);
-
-					FaceData rightFaceData = block.getFace(BlockData.Faces.RIGHT);
-					chunkVertices.addAll(rightFaceData.vertices);
-					chunkUvs.addAll(rightFaceData.uvs);
-
-					FaceData topFaceData = block.getFace(BlockData.Faces.TOP);
-					chunkVertices.addAll(topFaceData.vertices);
-					chunkUvs.addAll(topFaceData.uvs);
-
-					FaceData bottomFaceData = block.getFace(BlockData.Faces.BOTTOM);
-					chunkVertices.addAll(bottomFaceData.vertices);
-					chunkUvs.addAll(bottomFaceData.uvs);
-
-					addIndices(6);
+	public void genBlocks(float[][] heightMap) {
+		for (int x = 0; x < SIZE; x++) {
+			for (int z = 0; z < SIZE; z++) {
+				int columnHeight = (int)(heightMap[x][z] /10);
+				for (int y = 0; y < SIZE; y++) {
+					if (y < columnHeight) {
+						chunkBlocks[x][y][z] = new Block(new Vector3f(x, y, z), BlockData.BlockType.DIRT);
+					}
+					else {
+						chunkBlocks[x][y][z] = new Block(new Vector3f(x, y, z), BlockData.BlockType.EMPTY);
+					}
 				}
 			}
 		}
+	}
+
+	public void genFaces(float[][] heightMap) {
+		for (int x = 0; x < SIZE; x++) {
+			for (int z = 0; z < SIZE; z++) {
+				int columnHeight = (int)(heightMap[x][z] /10);
+				for (int y = 0; y < columnHeight; y++) {
+					int numberOfFaces = 0;
+
+					// qualifications: block to left is empty, is the farthest left in chunk
+					if (x > 0) {
+						if (chunkBlocks[x-1][y][z].blockType == BlockData.BlockType.EMPTY) {
+							integrateFace(chunkBlocks[x][y][z], BlockData.Faces.LEFT);
+						}
+					}
+					else {
+						integrateFace(chunkBlocks[x][y][z], BlockData.Faces.LEFT);
+					}
+					numberOfFaces++;
+
+					// qualifications: block to right is empty, is the farthest right in chunk
+					if (x < SIZE-1) {
+						if (chunkBlocks[x+1][y][z].blockType == BlockData.BlockType.EMPTY) {
+							integrateFace(chunkBlocks[x][y][z], BlockData.Faces.RIGHT);
+						}
+					}
+					else {
+						integrateFace(chunkBlocks[x][y][z], BlockData.Faces.RIGHT);
+					}
+					numberOfFaces++;
+
+					// qualifications: block above is empty, is the highest up in chunk
+					if (y < columnHeight-1) {
+						if (chunkBlocks[x][y][z].blockType == BlockData.BlockType.EMPTY) {
+							integrateFace(chunkBlocks[x][y][z], BlockData.Faces.TOP);
+						}
+					}
+					else {
+						integrateFace(chunkBlocks[x][y][z], BlockData.Faces.TOP);
+					}
+					numberOfFaces++;
+
+					// qualifications: block below is empty, is the lowest in chunk
+					if (y > 0) {
+						if (chunkBlocks[x][y-1][z].blockType == BlockData.BlockType.EMPTY) {
+							integrateFace(chunkBlocks[x][y][z], BlockData.Faces.BOTTOM);
+						}
+					}
+					else {
+						integrateFace(chunkBlocks[x][y][z], BlockData.Faces.BOTTOM);
+					}
+					numberOfFaces++;
+
+					// qualifications: block front is empty, is the front in chunk
+					if (z < SIZE-1) {
+						if (chunkBlocks[x][y][z+1].blockType == BlockData.BlockType.EMPTY) {
+							integrateFace(chunkBlocks[x][y][z], BlockData.Faces.FRONT);
+						}
+					}
+					else {
+						integrateFace(chunkBlocks[x][y][z], BlockData.Faces.FRONT);
+					}
+					numberOfFaces++;
+
+					// qualifications: block front is empty, is the back in chunk
+					if (z > 0) {
+						if (chunkBlocks[x][y][z-1].blockType == BlockData.BlockType.EMPTY) {
+							integrateFace(chunkBlocks[x][y][z], BlockData.Faces.BACK);
+						}
+					}
+					else {
+						integrateFace(chunkBlocks[x][y][z], BlockData.Faces.BACK);
+					}
+					numberOfFaces++;
+
+					addIndices(numberOfFaces);
+
+				}
+			}
+		}
+	}
+
+	public void integrateFace(Block block, BlockData.Faces face){
+		FaceData faceData = block.getFace(face);
+		chunkVertices.addAll(faceData.vertices);
+		chunkUvs.addAll(faceData.uvs);
 	}
 
 	public void addIndices(int amountOfFaces) {

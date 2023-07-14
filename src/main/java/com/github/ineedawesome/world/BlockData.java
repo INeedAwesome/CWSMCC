@@ -9,6 +9,10 @@ import java.util.Map;
 
 public class BlockData {
 
+	enum BlockType {
+		DIRT, EMPTY
+	};
+
 	enum Faces {
 		FRONT, BACK, LEFT, RIGHT, TOP, BOTTOM
 	};
